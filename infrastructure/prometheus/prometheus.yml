@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "campushub-node"
+    static_configs:
+      - targets:
+          - "host.containers.internal:9100"
