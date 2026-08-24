@@ -8,7 +8,18 @@ from app.services.cache import (
     get_cached_metrics,
     cache_metrics,
 )
-from app.services.prometheus import query_prometheus
+
+import time
+
+from app.schemas.metrics_history import (
+    AssetMetricsHistory,
+    MetricPoint,
+)
+
+from app.services.prometheus import (
+    query_prometheus,
+    query_prometheus_range,
+)
 
 router = APIRouter(
     prefix="/api/assets",
@@ -134,3 +145,114 @@ async def get_asset_metrics(
     )
 
     return metrics
+
+@router.get(
+    "/{asset_id}/metrics/history",
+    response_model=AssetMetricsHistory,
+)
+async def get_asset_metrics_history(
+    asset_id: int,
+    db: Session = Depends(get_db),
+):
+    asset = (
+        db.query(Asset)
+        .filter(Asset.id == asset_id)
+        .first()
+    )
+
+    if not asset:
+        raise HTTPException(
+            status_code=404,
+            detail="Asset not found",
+        )
+
+    if not asset.monitoring_enabled:
+        raise HTTPException(
+            status_code=400,
+            detail="Monitoring is not enabled for this asset",
+        )
+
+    if not asset.monitoring_target:
+        raise HTTPException(
+            status_code=400,
+            detail="Monitoring target is not configured",
+        )
+
+    target = asset.monitoring_target
+
+    end = int(time.time())
+
+    # Last 1 hour
+    start = end - (60 * 60)
+
+    # One data point every 60 seconds
+    step = 60
+
+    cpu_query = (
+        "100 - (avg by (instance) "
+        "(rate(node_cpu_seconds_total{"
+        f'mode="idle",instance="{target}"'
+        "}[5m])) * 100)"
+    )
+
+    memory_query = (
+        "100 * (1 - ("
+        f'node_memory_MemAvailable_bytes{{instance="{target}"}}'
+        " / "
+        f'node_memory_MemTotal_bytes{{instance="{target}"}}'
+        "))"
+    )
+
+    disk_query = (
+        "100 * (1 - ("
+        f'node_filesystem_avail_bytes{{'
+        f'instance="{target}",mountpoint="/"}}'
+        " / "
+        f'node_filesystem_size_bytes{{'
+        f'instance="{target}",mountpoint="/"}}'
+        "))"
+    )
+
+    cpu_result = await query_prometheus_range(
+        cpu_query,
+        start,
+        end,
+        step,
+    )
+
+    memory_result = await query_prometheus_range(
+        memory_query,
+        start,
+        end,
+        step,
+    )
+
+    disk_result = await query_prometheus_range(
+        disk_query,
+        start,
+        end,
+        step,
+    )
+
+    def convert_result(result):
+        if not result:
+            return []
+
+        values = result[0].get("values", [])
+
+        return [
+            MetricPoint(
+                timestamp=float(timestamp),
+                value=round(float(value), 2),
+            )
+            for timestamp, value in values
+        ]
+
+    return AssetMetricsHistory(
+        asset_id=asset.id,
+        asset_tag=asset.asset_tag,
+        range_hours=1,
+        cpu=convert_result(cpu_result),
+        memory=convert_result(memory_result),
+        disk=convert_result(disk_result),
+    )
