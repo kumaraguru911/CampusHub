@@ -1,5 +1,11 @@
 const API_URL = "http://127.0.0.1:8000";
-
+export interface Building {
+  id: number;
+  name: string;
+  code: string | null;
+  location: string | null;
+  description: string | null;
+}
 async function request<T>(endpoint: string): Promise<T> {
   const response = await fetch(`${API_URL}${endpoint}`);
 
@@ -10,8 +16,8 @@ async function request<T>(endpoint: string): Promise<T> {
   return response.json();
 }
 
-export function getBuildings() {
-  return request("/api/buildings");
+export function getBuildings(): Promise<Building[]> {
+  return request<Building[]>("/api/buildings");
 }
 
 export function getRooms() {

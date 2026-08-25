@@ -4,8 +4,9 @@ import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 
 import Dashboard from "./pages/Dashboard";
-import AssetDetail from "./pages/AssetDetail";
+import Buildings from "./pages/Buildings";
 import Assets from "./pages/Assets";
+import AssetDetail from "./pages/AssetDetail";
 
 function App() {
   return (
@@ -17,20 +18,29 @@ function App() {
           <Header />
 
           <Routes>
+            {/* Dashboard */}
             <Route
               path="/"
               element={<Dashboard />}
             />
 
+            {/* Buildings */}
+            <Route
+              path="/buildings"
+              element={<Buildings />}
+            />
+
+            {/* Assets */}
+            <Route
+              path="/assets"
+              element={<Assets />}
+            />
+
+            {/* Asset Details */}
             <Route
               path="/assets/:assetId"
               element={<AssetDetail />}
             />
-
-            <Route
-  path="/assets"
-  element={<Assets />}
-/>
           </Routes>
         </div>
       </div>

@@ -18,7 +18,7 @@ const navigation = [
   {
     name: "Buildings",
     icon: Building2,
-    path: "#",
+    path: "/buildings",
   },
   {
     name: "Assets",
