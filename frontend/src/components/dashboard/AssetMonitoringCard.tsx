@@ -22,6 +22,7 @@ import type {
 } from "../../types/metrics";
 
 import AssetMetricsChart from "./AssetMetricsChart";
+import { Link } from "react-router-dom";
 
 interface AssetMonitoringCardProps {
   assetId: number;
@@ -168,9 +169,12 @@ export default function AssetMonitoringCard({
             Monitored Asset
           </p>
 
-          <h2 className="mt-1 text-lg font-semibold text-slate-900">
-            {data.asset_tag}
-          </h2>
+          <Link
+  to={`/assets/${assetId}`}
+  className="mt-1 block text-lg font-semibold text-slate-900 hover:text-slate-600"
+>
+  {data.asset_tag}
+</Link>
         </div>
 
         <span

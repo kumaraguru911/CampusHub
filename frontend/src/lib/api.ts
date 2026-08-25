@@ -36,3 +36,7 @@ export function getAssetMetricsHistory(
     `/api/assets/${assetId}/metrics/history?range=${range}`,
   );
 }
+
+export function getAsset(assetId: number) {
+  return request(`/api/assets/${assetId}`);
+}
