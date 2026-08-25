@@ -152,6 +152,7 @@ async def get_asset_metrics(
 )
 async def get_asset_metrics_history(
     asset_id: int,
+    range: str = "1h",
     db: Session = Depends(get_db),
 ):
     asset = (
@@ -182,11 +183,36 @@ async def get_asset_metrics_history(
 
     end = int(time.time())
 
-    # Last 1 hour
-    start = end - (60 * 60)
+    range_config = {
+    "1h": {
+        "seconds": 60 * 60,
+        "step": 60,
+    },
+    "6h": {
+        "seconds": 6 * 60 * 60,
+        "step": 5 * 60,
+    },
+    "24h": {
+        "seconds": 24 * 60 * 60,
+        "step": 15 * 60,
+    },
+    "7d": {
+        "seconds": 7 * 24 * 60 * 60,
+        "step": 60 * 60,
+    },
+    }
 
-    # One data point every 60 seconds
-    step = 60
+    if range not in range_config:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid range. Use 1h, 6h, 24h, or 7d.",
+        )
+
+    config = range_config[range]
+
+    end = int(time.time())
+    start = end - config["seconds"]
+    step = config["step"]
 
     cpu_query = (
         "100 - (avg by (instance) "
@@ -251,7 +277,7 @@ async def get_asset_metrics_history(
     return AssetMetricsHistory(
         asset_id=asset.id,
         asset_tag=asset.asset_tag,
-        range_hours=1,
+        range_hours=config["seconds"] // 3600,
         cpu=convert_result(cpu_result),
         memory=convert_result(memory_result),
         disk=convert_result(disk_result),

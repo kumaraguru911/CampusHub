@@ -1,4 +1,7 @@
+import { useState } from "react";
+
 import { useQuery } from "@tanstack/react-query";
+
 import {
   Cpu,
   HardDrive,
@@ -10,6 +13,8 @@ import {
   getAssetMetrics,
   getAssetMetricsHistory,
 } from "../../lib/api";
+
+import type { MetricsRange } from "../../lib/api";
 
 import type {
   AssetMetrics,
@@ -29,8 +34,12 @@ function formatUptime(seconds: number | null) {
   }
 
   const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
+  const hours = Math.floor(
+    (seconds % 86400) / 3600,
+  );
+  const minutes = Math.floor(
+    (seconds % 3600) / 60,
+  );
 
   if (days > 0) {
     return `${days}d ${hours}h`;
@@ -65,18 +74,58 @@ export default function AssetMonitoringCard({
   assetId,
   assetTag,
 }: AssetMonitoringCardProps) {
+  const [range, setRange] =
+    useState<MetricsRange>("1h");
+
+  /*
+   * Current metrics
+   *
+   * Refresh every 15 seconds.
+   */
   const metricsQuery = useQuery<AssetMetrics>({
-    queryKey: ["asset-metrics", assetId],
-    queryFn: () => getAssetMetrics(assetId),
+    queryKey: [
+      "asset-metrics",
+      assetId,
+    ],
+
+    queryFn: () =>
+      getAssetMetrics(assetId),
+
     refetchInterval: 15000,
   });
 
-  const historyQuery = useQuery<AssetMetricsHistory>({
-    queryKey: ["asset-metrics-history", assetId],
-    queryFn: () => getAssetMetricsHistory(assetId),
-    refetchInterval: 60000,
-  });
+  /*
+   * Historical metrics
+   *
+   * The selected range becomes part
+   * of the query key.
+   *
+   * Therefore changing:
+   *
+   * 1h → 6h
+   *
+   * automatically creates a new query.
+   */
+  const historyQuery =
+    useQuery<AssetMetricsHistory>({
+      queryKey: [
+        "asset-metrics-history",
+        assetId,
+        range,
+      ],
 
+      queryFn: () =>
+        getAssetMetricsHistory(
+          assetId,
+          range,
+        ),
+
+      refetchInterval: 60000,
+    });
+
+  /*
+   * Current metrics loading state
+   */
   if (metricsQuery.isLoading) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-6">
@@ -87,7 +136,13 @@ export default function AssetMonitoringCard({
     );
   }
 
-  if (metricsQuery.isError || !metricsQuery.data) {
+  /*
+   * Current metrics error
+   */
+  if (
+    metricsQuery.isError ||
+    !metricsQuery.data
+  ) {
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 p-6">
         <p className="font-medium text-red-800">
@@ -95,7 +150,8 @@ export default function AssetMonitoringCard({
         </p>
 
         <p className="mt-1 text-sm text-red-600">
-          Check the monitoring target and Prometheus.
+          Check the monitoring target and
+          Prometheus.
         </p>
       </div>
     );
@@ -150,14 +206,19 @@ export default function AssetMonitoringCard({
         />
 
         <div className="rounded-lg bg-slate-50 p-4">
-          <Clock size={18} className="text-slate-500" />
+          <Clock
+            size={18}
+            className="text-slate-500"
+          />
 
           <p className="mt-3 text-xs text-slate-500">
             Uptime
           </p>
 
           <p className="mt-1 text-lg font-semibold text-slate-900">
-            {formatUptime(data.uptime_seconds)}
+            {formatUptime(
+              data.uptime_seconds,
+            )}
           </p>
         </div>
       </div>
@@ -177,27 +238,49 @@ export default function AssetMonitoringCard({
             <p className="text-sm font-medium text-amber-800">
               Historical metrics are currently unavailable.
             </p>
+
+            <p className="mt-1 text-xs text-amber-700">
+              Check the Prometheus history endpoint.
+            </p>
           </div>
         )}
 
         {historyQuery.data && (
-  <div className="grid gap-6 lg:grid-cols-2">
-    <AssetMetricsChart
-      title="CPU Usage"
-      data={historyQuery.data.cpu}
-    />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <AssetMetricsChart
+              title="CPU Usage"
+              data={
+                historyQuery.data.cpu
+              }
+              range={range}
+              onRangeChange={
+                setRange
+              }
+            />
 
-    <AssetMetricsChart
-      title="Memory Usage"
-      data={historyQuery.data.memory}
-    />
+            <AssetMetricsChart
+              title="Memory Usage"
+              data={
+                historyQuery.data.memory
+              }
+              range={range}
+              onRangeChange={
+                setRange
+              }
+            />
 
-    <AssetMetricsChart
-      title="Disk Usage"
-      data={historyQuery.data.disk}
-    />
-  </div>
-)}
+            <AssetMetricsChart
+              title="Disk Usage"
+              data={
+                historyQuery.data.disk
+              }
+              range={range}
+              onRangeChange={
+                setRange
+              }
+            />
+          </div>
+        )}
       </div>
     </div>
   );
