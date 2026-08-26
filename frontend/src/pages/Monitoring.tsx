@@ -1,9 +1,6 @@
 import { useQueries } from "@tanstack/react-query";
 import {
   Activity,
-  Cpu,
-  HardDrive,
-  MemoryStick,
   Monitor,
 } from "lucide-react";
 
@@ -12,9 +9,9 @@ import {
   getAssetMetrics,
 } from "../lib/api";
 
-import type {
-  Asset,
-} from "../lib/api";
+import type { Asset } from "../lib/api";
+
+import AssetMonitoringCard from "../components/dashboard/AssetMonitoringCard";
 
 interface AssetMetrics {
   asset_id: number;
@@ -44,30 +41,6 @@ function getHealthClasses(
   }
 }
 
-function formatUptime(seconds: number | null) {
-  if (seconds === null) {
-    return "Unknown";
-  }
-
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor(
-    (seconds % 86400) / 3600,
-  );
-  const minutes = Math.floor(
-    (seconds % 3600) / 60,
-  );
-
-  if (days > 0) {
-    return `${days}d ${hours}h`;
-  }
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-
-  return `${minutes}m`;
-}
-
 export default function Monitoring() {
   const assetsQuery = useQueries({
     queries: [
@@ -83,20 +56,21 @@ export default function Monitoring() {
     | Asset[]
     | undefined;
 
+  const monitoredAssets =
+    assets?.filter(
+      (asset) => asset.monitoring_enabled,
+    ) ?? [];
+
   const metricsQueries = useQueries({
-    queries: (assets ?? [])
-      .filter(
-        (asset) => asset.monitoring_enabled,
-      )
-      .map((asset) => ({
-        queryKey: [
-          "monitoring-metrics",
-          asset.id,
-        ],
-        queryFn: () =>
-          getAssetMetrics(asset.id),
-        refetchInterval: 15000,
-      })),
+    queries: monitoredAssets.map((asset) => ({
+      queryKey: [
+        "monitoring-metrics",
+        asset.id,
+      ],
+      queryFn: () =>
+        getAssetMetrics(asset.id),
+      refetchInterval: 15000,
+    })),
   });
 
   const isLoading =
@@ -105,25 +79,15 @@ export default function Monitoring() {
       (query) => query.isLoading,
     );
 
-  if (isLoading) {
-    return (
-      <main className="p-8">
-        <p className="text-sm text-slate-500">
-          Loading monitoring data...
-        </p>
-      </main>
-    );
-  }
-
-  const monitoredAssets =
-    assets?.filter(
-      (asset) => asset.monitoring_enabled,
-    ) ?? [];
-
   const metrics =
     metricsQueries
-      .map((query) => query.data as AssetMetrics)
-      .filter(Boolean);
+      .map(
+        (query) =>
+          query.data as
+            | AssetMetrics
+            | undefined,
+      )
+      .filter(Boolean) as AssetMetrics[];
 
   const healthyCount = metrics.filter(
     (item) => item.health === "healthy",
@@ -136,6 +100,18 @@ export default function Monitoring() {
   const criticalCount = metrics.filter(
     (item) => item.health === "critical",
   ).length;
+
+  if (isLoading) {
+    return (
+      <main className="p-8">
+        <div className="rounded-xl border border-slate-200 bg-white p-6">
+          <p className="text-sm text-slate-500">
+            Loading monitoring data...
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="space-y-6 p-8">
@@ -185,15 +161,15 @@ export default function Monitoring() {
         />
       </div>
 
-      {/* Assets */}
-      <div>
+      {/* Live overview */}
+      <section>
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-slate-900">
-            Monitored Assets
+            Live Overview
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Live metrics from Prometheus.
+            Current infrastructure health from Prometheus.
           </p>
         </div>
 
@@ -219,10 +195,6 @@ export default function Monitoring() {
 
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Disk
-                </th>
-
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Uptime
                 </th>
               </tr>
             </thead>
@@ -264,35 +236,22 @@ export default function Monitoring() {
                     </span>
                   </td>
 
-                  <td className="px-6 py-4">
-                    <MetricValue
-                      icon={<Cpu size={15} />}
-                      value={item.cpu_percent}
-                    />
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <MetricValue
-                      icon={
-                        <MemoryStick size={15} />
-                      }
-                      value={item.memory_percent}
-                    />
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <MetricValue
-                      icon={
-                        <HardDrive size={15} />
-                      }
-                      value={item.disk_percent}
-                    />
+                  <td className="px-6 py-4 text-sm text-slate-600">
+                    {item.cpu_percent !== null
+                      ? `${item.cpu_percent.toFixed(1)}%`
+                      : "N/A"}
                   </td>
 
                   <td className="px-6 py-4 text-sm text-slate-600">
-                    {formatUptime(
-                      item.uptime_seconds,
-                    )}
+                    {item.memory_percent !== null
+                      ? `${item.memory_percent.toFixed(1)}%`
+                      : "N/A"}
+                  </td>
+
+                  <td className="px-6 py-4 text-sm text-slate-600">
+                    {item.disk_percent !== null
+                      ? `${item.disk_percent.toFixed(1)}%`
+                      : "N/A"}
                   </td>
                 </tr>
               ))}
@@ -312,7 +271,30 @@ export default function Monitoring() {
             </div>
           )}
         </div>
-      </div>
+      </section>
+
+      {/* Detailed monitoring */}
+      <section>
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Detailed Monitoring
+          </h2>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Current metrics and historical performance.
+          </p>
+        </div>
+
+        <div className="space-y-6">
+          {monitoredAssets.map((asset) => (
+            <AssetMonitoringCard
+              key={asset.id}
+              assetId={asset.id}
+              assetTag={asset.asset_tag}
+            />
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
@@ -339,28 +321,6 @@ function SummaryCard({
       >
         {value}
       </p>
-    </div>
-  );
-}
-
-interface MetricValueProps {
-  icon: React.ReactNode;
-  value: number | null;
-}
-
-function MetricValue({
-  icon,
-  value,
-}: MetricValueProps) {
-  return (
-    <div className="flex items-center gap-2 text-sm text-slate-600">
-      {icon}
-
-      <span>
-        {value !== null
-          ? `${value.toFixed(1)}%`
-          : "N/A"}
-      </span>
     </div>
   );
 }
