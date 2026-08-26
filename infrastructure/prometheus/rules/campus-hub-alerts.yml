@@ -1,0 +1,103 @@
+groups:
+  - name: campushub-infrastructure
+    rules:
+
+      - alert: NodeExporterDown
+        expr: up{job="campushub-node"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node Exporter is down"
+          description: "CampusHub Node Exporter has been unreachable for more than 1 minute."
+
+      - alert: HighCPUUsage
+        expr: |
+          100 - (
+            avg by (instance) (
+              rate(node_cpu_seconds_total{job="campushub-node",mode="idle"}[5m])
+            ) * 100
+          ) > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage on {{ $labels.instance }} has exceeded 80% for more than 2 minutes."
+
+      - alert: HighMemoryUsage
+        expr: |
+          100 * (
+            1 -
+            node_memory_MemAvailable_bytes{job="campushub-node"}
+            /
+            node_memory_MemTotal_bytes{job="campushub-node"}
+          ) > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage on {{ $labels.instance }} has exceeded 80% for more than 2 minutes."
+
+      - alert: HighDiskUsage
+        expr: |
+          100 * (
+            1 -
+            node_filesystem_avail_bytes{
+              job="campushub-node",
+              mountpoint="/"
+            }
+            /
+            node_filesystem_size_bytes{
+              job="campushub-node",
+              mountpoint="/"
+            }
+          ) > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk usage"
+          description: "Disk usage on {{ $labels.instance }} has exceeded 80% for more than 2 minutes."
+
+
+  - name: campushub-application
+    rules:
+
+      - alert: CampusHubAPIDown
+        expr: up{job="campushub-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CampusHub API is down"
+          description: "The CampusHub FastAPI application has been unreachable for more than 1 minute."
+
+      - alert: HighHTTP5xxRate
+        expr: |
+          (
+            sum(rate(http_requests_total{job="campushub-api",status="5xx"}[5m]))
+            /
+            sum(rate(http_requests_total{job="campushub-api"}[5m]))
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "More than 5% of CampusHub API requests are returning HTTP 5xx responses."
+
+      - alert: HighAPILatency
+        expr: |
+          (
+            sum(rate(http_request_duration_seconds_sum{job="campushub-api"}[5m]))
+            /
+            sum(rate(http_request_duration_seconds_count{job="campushub-api"}[5m]))
+          ) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CampusHub API latency"
+          description: "Average CampusHub API request latency has exceeded 1 second for more than 2 minutes."

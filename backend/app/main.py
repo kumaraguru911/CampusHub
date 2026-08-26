@@ -19,7 +19,7 @@ from app.routers.alerts import router as alerts_router
 from app.services.alert_scheduler import (
     alert_evaluation_loop,
 )
-
+from prometheus_fastapi_instrumentator import Instrumentator
 
 Base.metadata.create_all(bind=engine)
 
@@ -47,7 +47,7 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
-
+Instrumentator().instrument(app).expose(app)
 
 app.add_middleware(
     CORSMiddleware,
