@@ -6,6 +6,30 @@ export interface Building {
   location: string | null;
   description: string | null;
 }
+
+export interface Room {
+  id: number;
+  building_id: number;
+  name: string;
+  room_number: string;
+  room_type: string;
+  capacity: number;
+}
+
+export interface Asset {
+  id: number;
+  room_id: number;
+  name: string;
+  asset_tag: string;
+  asset_type: string;
+  manufacturer: string | null;
+  model: string | null;
+  serial_number: string | null;
+  status: string;
+  purchase_date: string | null;
+  monitoring_enabled: boolean;
+  monitoring_target: string | null;
+}
 async function request<T>(endpoint: string): Promise<T> {
   const response = await fetch(`${API_URL}${endpoint}`);
 
@@ -20,12 +44,12 @@ export function getBuildings(): Promise<Building[]> {
   return request<Building[]>("/api/buildings");
 }
 
-export function getRooms() {
-  return request("/api/rooms");
+export function getRooms(): Promise<Room[]> {
+  return request<Room[]>("/api/rooms");
 }
 
-export function getAssets() {
-  return request("/api/assets");
+export function getAssets(): Promise<Asset[]> {
+  return request<Asset[]>("/api/assets");
 }
 
 export function getAssetMetrics(assetId: number) {

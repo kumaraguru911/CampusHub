@@ -6,7 +6,10 @@ import Header from "./components/layout/Header";
 import Dashboard from "./pages/Dashboard";
 import Buildings from "./pages/Buildings";
 import Assets from "./pages/Assets";
+import BuildingDetail from "./pages/BuildingDetail";
 import AssetDetail from "./pages/AssetDetail";
+import RoomDetail from "./pages/RoomDetail";
+import Monitoring from "./pages/Monitoring";
 
 function App() {
   return (
@@ -35,12 +38,23 @@ function App() {
               path="/assets"
               element={<Assets />}
             />
-
+            <Route
+  path="/buildings/:buildingId"
+  element={<BuildingDetail />}
+/>
             {/* Asset Details */}
             <Route
               path="/assets/:assetId"
               element={<AssetDetail />}
             />
+            <Route
+  path="/rooms/:roomId"
+  element={<RoomDetail />}
+/>
+            <Route
+  path="/monitoring"
+  element={<Monitoring />}
+/>
           </Routes>
         </div>
       </div>

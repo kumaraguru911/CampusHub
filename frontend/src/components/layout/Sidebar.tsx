@@ -28,7 +28,7 @@ const navigation = [
   {
     name: "Monitoring",
     icon: Activity,
-    path: "#",
+    path: "/monitoring",
   },
   {
     name: "Alerts",
