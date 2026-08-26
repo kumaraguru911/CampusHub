@@ -30,6 +30,19 @@ export interface Asset {
   monitoring_enabled: boolean;
   monitoring_target: string | null;
 }
+
+export interface Alert {
+  id: number;
+  asset_id: number;
+  metric: string;
+  severity: "WARNING" | "CRITICAL";
+  message: string;
+  value: number;
+  threshold: number;
+  status: "ACTIVE" | "RESOLVED";
+  created_at: string;
+  resolved_at: string | null;
+}
 async function request<T>(endpoint: string): Promise<T> {
   const response = await fetch(`${API_URL}${endpoint}`);
 
@@ -69,4 +82,18 @@ export function getAssetMetricsHistory(
 
 export function getAsset(assetId: number) {
   return request(`/api/assets/${assetId}`);
+}
+
+export function getAlerts() {
+  return request<Alert[]>("/api/alerts");
+}
+
+export function getActiveAlerts() {
+  return request<Alert[]>("/api/alerts/active");
+}
+
+export function resolveAlert(alertId: number) {
+  return request<Alert>(
+    `/api/alerts/${alertId}/resolve`,
+  );
 }

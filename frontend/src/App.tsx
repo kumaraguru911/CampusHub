@@ -10,6 +10,7 @@ import BuildingDetail from "./pages/BuildingDetail";
 import AssetDetail from "./pages/AssetDetail";
 import RoomDetail from "./pages/RoomDetail";
 import Monitoring from "./pages/Monitoring";
+import Alerts from "./pages/Alerts";
 
 function App() {
   return (
@@ -54,6 +55,11 @@ function App() {
             <Route
   path="/monitoring"
   element={<Monitoring />}
+/>
+
+<Route
+  path="/alerts"
+  element={<Alerts />}
 />
           </Routes>
         </div>

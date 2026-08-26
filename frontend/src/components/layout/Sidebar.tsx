@@ -33,7 +33,7 @@ const navigation = [
   {
     name: "Alerts",
     icon: Bell,
-    path: "#",
+    path: "/alerts",
   },
   {
     name: "Settings",
