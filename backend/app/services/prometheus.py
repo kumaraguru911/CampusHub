@@ -1,8 +1,10 @@
 import httpx
+import os
 
-
-PROMETHEUS_URL = "http://localhost:9090"
-
+PROMETHEUS_URL = os.getenv(
+	"PROMETHEUS_URL",
+	"http://localhost:9090",
+)
 
 async def query_prometheus(query: str):
     url = f"{PROMETHEUS_URL}/api/v1/query"
