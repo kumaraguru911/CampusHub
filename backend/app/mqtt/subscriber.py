@@ -1,13 +1,8 @@
 import json
-from datetime import datetime, timezone
+
+from app.kafka.producer import publish_telemetry
 
 import paho.mqtt.client as mqtt
-from sqlalchemy import select
-
-from app.db.database import SessionLocal
-from app.models.asset import Asset
-from app.models.telemetry import Telemetry
-
 
 MQTT_BROKER = "127.0.0.1"
 MQTT_PORT = 1883
@@ -36,8 +31,6 @@ def on_message(
     userdata,
     message: mqtt.MQTTMessage,
 ) -> None:
-    db = SessionLocal()
-
     try:
         payload = json.loads(message.payload.decode())
 
@@ -47,53 +40,19 @@ def on_message(
             print("Telemetry rejected: missing asset_tag")
             return
 
-        asset = db.scalar(
-            select(Asset).where(Asset.asset_tag == asset_tag)
-        )
+        publish_telemetry(payload)
 
-        if not asset:
-            print(f"Telemetry rejected: unknown asset {asset_tag}")
-            return
-
-        timestamp = payload.get("timestamp")
-
-        if timestamp:
-            recorded_at = datetime.fromtimestamp(
-                timestamp,
-                tz=timezone.utc,
-            ).replace(tzinfo=None)
-        else:
-            recorded_at = datetime.utcnow()
-
-        telemetry = Telemetry(
-            asset_id=asset.id,
-            temperature=payload.get("temperature"),
-            humidity=payload.get("humidity"),
-            status=payload.get("status", "ACTIVE"),
-            recorded_at=recorded_at,
-        )
-
-        db.add(telemetry)
-        db.commit()
-        db.refresh(telemetry)
-
-        print("\nTelemetry stored")
-        print(f"Asset: {asset.asset_tag}")
-        print(f"Telemetry ID: {telemetry.id}")
-        print(f"Temperature: {telemetry.temperature}°C")
-        print(f"Humidity: {telemetry.humidity}%")
-        print(f"Status: {telemetry.status}")
+        print("\nTelemetry forwarded to Kafka")
+        print(f"Asset: {asset_tag}")
+        print(f"Temperature: {payload.get('temperature')}°C")
+        print(f"Humidity: {payload.get('humidity')}%")
+        print(f"Status: {payload.get('status')}")
 
     except json.JSONDecodeError:
         print(f"Invalid JSON received: {message.payload!r}")
 
     except Exception as exc:
-        db.rollback()
-        print(f"Failed to store telemetry: {exc}")
-
-    finally:
-        db.close()
-
+        print(f"Failed to publish telemetry to Kafka: {exc}")
 
 def main() -> None:
     client = mqtt.Client(

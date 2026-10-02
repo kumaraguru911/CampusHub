@@ -31,3 +31,4 @@ websockets==17.0.1
 prometheus-fastapi-instrumentator==8.1.0
 prometheus-client==0.26.0
 paho-mqtt==2.1.0
+kafka-python-ng==2.2.3
