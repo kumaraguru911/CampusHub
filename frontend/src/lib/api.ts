@@ -1,4 +1,10 @@
+import type {
+  AssetMetrics,
+  AssetMetricsHistory,
+} from "../types/metrics";
+
 const API_URL = "http://127.0.0.1:8000";
+
 export interface Building {
   id: number;
   name: string;
@@ -43,6 +49,7 @@ export interface Alert {
   created_at: string;
   resolved_at: string | null;
 }
+
 async function request<T>(endpoint: string): Promise<T> {
   const response = await fetch(`${API_URL}${endpoint}`);
 
@@ -65,8 +72,12 @@ export function getAssets(): Promise<Asset[]> {
   return request<Asset[]>("/api/assets");
 }
 
-export function getAssetMetrics(assetId: number) {
-  return request(`/api/assets/${assetId}/metrics`);
+export function getAssetMetrics(
+  assetId: number,
+): Promise<AssetMetrics> {
+  return request<AssetMetrics>(
+    `/api/assets/${assetId}/metrics`,
+  );
 }
 
 export type MetricsRange = "1h" | "6h" | "24h" | "7d";
@@ -74,25 +85,27 @@ export type MetricsRange = "1h" | "6h" | "24h" | "7d";
 export function getAssetMetricsHistory(
   assetId: number,
   range: MetricsRange,
-) {
-  return request(
+): Promise<AssetMetricsHistory> {
+  return request<AssetMetricsHistory>(
     `/api/assets/${assetId}/metrics/history?range=${range}`,
   );
 }
 
-export function getAsset(assetId: number) {
-  return request(`/api/assets/${assetId}`);
+export function getAsset(assetId: number): Promise<Asset> {
+  return request<Asset>(`/api/assets/${assetId}`);
 }
 
-export function getAlerts() {
+export function getAlerts(): Promise<Alert[]> {
   return request<Alert[]>("/api/alerts");
 }
 
-export function getActiveAlerts() {
+export function getActiveAlerts(): Promise<Alert[]> {
   return request<Alert[]>("/api/alerts/active");
 }
 
-export function resolveAlert(alertId: number) {
+export function resolveAlert(
+  alertId: number,
+): Promise<Alert> {
   return request<Alert>(
     `/api/alerts/${alertId}/resolve`,
   );
