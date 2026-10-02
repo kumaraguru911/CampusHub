@@ -21,7 +21,6 @@ from app.services.alert_scheduler import (
 )
 from prometheus_fastapi_instrumentator import Instrumentator
 
-Base.metadata.create_all(bind=engine)
 
 
 @asynccontextmanager

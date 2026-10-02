@@ -54,9 +54,23 @@ services:
       - campushub-network
     command: redis-server --appendonly yes
 
+  mqtt:
+    image: docker.io/eclipse-mosquitto:2
+    container_name: campushub-mqtt
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:Z
+      - campushub-mqtt-data:/mosquitto/data
+      - campushub-mqtt-log:/mosquitto/log
+    networks:
+      - campushub-network
+
 networks:
   campushub-network:
 
 volumes:
   campushub-postgres-data:
   campushub-redis-data:
+  campushub-mqtt-data:
+  campushub-mqtt-log:
