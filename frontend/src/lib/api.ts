@@ -3,7 +3,7 @@ import type {
   AssetMetricsHistory,
 } from "../types/metrics";
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "";
 
 export interface Building {
   id: number;

@@ -2,8 +2,12 @@ import json
 
 from kafka import KafkaProducer
 
+import os
 
-KAFKA_BROKER = "localhost:9092"
+KAFKA_BROKER = os.getenv(
+    "KAFKA_BROKER",
+    "localhost:9092",
+)
 KAFKA_TOPIC = "campus.telemetry"
 
 

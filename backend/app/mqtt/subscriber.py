@@ -1,11 +1,20 @@
 import json
-
+import os
 from app.kafka.producer import publish_telemetry
 
 import paho.mqtt.client as mqtt
 
-MQTT_BROKER = "127.0.0.1"
-MQTT_PORT = 1883
+MQTT_BROKER = os.getenv(
+    "MQTT_BROKER",
+    "127.0.0.1",
+)
+
+MQTT_PORT = int(
+    os.getenv(
+        "MQTT_PORT",
+        "1883",
+    )
+)
 MQTT_TOPIC = "campus/assets/+/telemetry"
 
 

@@ -94,10 +94,10 @@ async def get_asset_metrics(
     disk_query = (
         "100 * (1 - ("
         f'node_filesystem_avail_bytes{{'
-        f'instance="{target}",mountpoint="/"}}'
+        f'instance="{target}",mountpoint="/data"}}'
         " / "
         f'node_filesystem_size_bytes{{'
-        f'instance="{target}",mountpoint="/"}}'
+        f'instance="{target}",mountpoint="/data"}}'
         "))"
     )
 
@@ -232,10 +232,10 @@ async def get_asset_metrics_history(
     disk_query = (
         "100 * (1 - ("
         f'node_filesystem_avail_bytes{{'
-        f'instance="{target}",mountpoint="/"}}'
+        f'instance="{target}",mountpoint="/data"}}'
         " / "
         f'node_filesystem_size_bytes{{'
-        f'instance="{target}",mountpoint="/"}}'
+        f'instance="{target}",mountpoint="/data"}}'
         "))"
     )
 

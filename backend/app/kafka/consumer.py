@@ -9,7 +9,12 @@ from app.models.asset import Asset
 from app.models.telemetry import Telemetry
 
 
-KAFKA_BROKER = "localhost:9092"
+import os
+
+KAFKA_BROKER = os.getenv(
+    "KAFKA_BROKER",
+    "localhost:9092",
+)
 KAFKA_TOPIC = "campus.telemetry"
 KAFKA_GROUP = "campushub-telemetry-consumer"
 
