@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: campushub-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: campushub-frontend
+  template:
+    metadata:
+      labels:
+        app: campushub-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: localhost/campushub-frontend:k8s-v2
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: campushub-frontend
+spec:
+  selector:
+    app: campushub-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP

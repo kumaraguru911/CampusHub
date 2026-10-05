@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: campushub-mqtt-subscriber
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: campushub-mqtt-subscriber
+  template:
+    metadata:
+      labels:
+        app: campushub-mqtt-subscriber
+    spec:
+      containers:
+        - name: mqtt-subscriber
+          image: localhost/campushub-backend:k8s-v4
+          imagePullPolicy: Never
+          command:
+            - python
+            - -m
+            - app.mqtt.subscriber
+          env:
+            - name: MQTT_BROKER
+              value: "campushub-mqtt"
+            - name: MQTT_PORT
+              value: "1883"
+            - name: KAFKA_BROKER
+              value: "campushub-kafka:9092"

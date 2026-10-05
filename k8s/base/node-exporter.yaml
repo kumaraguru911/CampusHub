@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: campushub-node-exporter
+spec:
+  selector:
+    matchLabels:
+      app: campushub-node-exporter
+  template:
+    metadata:
+      labels:
+        app: campushub-node-exporter
+    spec:
+      hostNetwork: true
+      hostPID: true
+      containers:
+        - name: node-exporter
+          image: docker.io/prom/node-exporter:latest
+          args:
+            - "--path.rootfs=/host"
+          ports:
+            - containerPort: 9100
+              hostPort: 9100
+          volumeMounts:
+            - name: root
+              mountPath: /host
+              readOnly: true
+      volumes:
+        - name: root
+          hostPath:
+            path: /
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: campushub-node-exporter
+spec:
+  selector:
+    app: campushub-node-exporter
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: 9100
+  type: ClusterIP
